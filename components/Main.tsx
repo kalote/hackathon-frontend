@@ -8,6 +8,7 @@ import React, {
 import { RiSettings3Fill } from "react-icons/ri";
 import Graph from "./Graph";
 import { TransactionContext } from "../context/transactionContext";
+import { ethers } from "ethers";
 
 const styles = {
   wrapper: `w-screen flex items-center justify-center`,
@@ -34,35 +35,66 @@ const Main = () => {
   const [balanceData, setBalanceData] = useState<GraphData | undefined>(
     undefined
   );
+  const [currentBalanceInEth, setCurrentBalanceInEth] = useState<
+    string | undefined
+  >(undefined);
+  const [currentBalanceInDollar, setCurrentBalanceInDollar] = useState<
+    string | undefined
+  >(undefined);
+
   const overlayRef = useRef() as MutableRefObject<HTMLDivElement>;
 
-  const { currentBalance, currentAccount, ethPrice } = useContext(
-    TransactionContext
-  ) as TxContext;
+  const {
+    currentAccount,
+    ethPrice,
+    eth: ethProvider,
+  } = useContext(TransactionContext) as TxContext;
 
+  // Get Current account balance in ETH
+  useEffect(() => {
+    if (!currentAccount) return;
+    !(async () => {
+      // get account balance
+      const provider = new ethers.providers.Web3Provider(ethProvider);
+      const bal = await provider.getBalance(currentAccount);
+
+      setCurrentBalanceInEth(ethers.utils.formatEther(bal));
+    })();
+  }, [currentAccount]);
+
+  // Calculate account balance in dollar based on ethPrice + current balance in ETH
+  useEffect(() => {
+    if (!currentBalanceInEth || !ethPrice) return;
+    const balInDollar = (parseInt(currentBalanceInEth) * parseInt(ethPrice))
+      .toFixed(2)
+      .toString();
+    setCurrentBalanceInDollar(balInDollar);
+  }, [currentBalanceInEth, ethPrice]);
+
+  // Remove overlay since we have an account connected
   useEffect(() => {
     if (currentAccount) {
       overlayRef.current.remove();
     }
   }, [currentAccount]);
 
+  // get tx data for the connected account
   useEffect(() => {
     if (!currentAccount) return;
     !(async () => {
-      // const URL = `http://134.122.118.59:4000/transactions/${currentAccount}`;
-      // const res = await fetch(URL);
-      // const data = await res.json();
-      const data = (await import("../assets/data.json").then(
-        (module) => module.default
-      )) as Transactions;
+      const URL = `http://134.122.118.59:4000/transactions/${currentAccount}`;
+      const res = await fetch(URL);
+      const data: Transactions = await res.json();
       transformData(data);
     })();
   }, [currentAccount]);
 
+  // utility to calculate price in a human readable way
   const getValueUSD = (price: string, value: string): string => {
     return ((parseInt(price) / 1e18) * (parseInt(value) / 1e18)).toString();
   };
 
+  // transform data for chart.js format
   const transformData = (data: Transactions) => {
     let transformed: GraphData = {
       labels: [],
@@ -71,7 +103,7 @@ const Main = () => {
         out: [],
       },
     };
-    console.log(currentAccount);
+
     data.map((tx: Transaction) => {
       transformed.labels.push(tx.blockNumber);
       if (tx.to === currentAccount) {
@@ -102,12 +134,7 @@ const Main = () => {
           </div>
           <div className={styles.formHeader}>
             <div>
-              ${" "}
-              {currentBalance
-                ? (parseFloat(currentBalance) * parseFloat(ethPrice))
-                    .toFixed(2)
-                    .toString()
-                : "1,926.20"}
+              $ {currentBalanceInDollar ? currentBalanceInDollar : "1,926.20"}
             </div>
             <div>
               <RiSettings3Fill />

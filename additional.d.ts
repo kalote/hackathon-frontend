@@ -8,8 +8,8 @@ interface Window {
 interface TxContext {
   connectWallet: (metamask?: Window.ethereum) => Promise<void>;
   currentAccount: string;
-  currentBalance: string;
   ethPrice: string;
+  eth: any;
 }
 
 type GraphProps = {

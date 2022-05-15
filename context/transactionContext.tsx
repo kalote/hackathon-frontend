@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { ethers } from "ethers";
 
 export const TransactionContext = React.createContext<TxContext | null>(null);
 
@@ -13,23 +12,22 @@ export const TransactionProvider: React.FC<React.ReactNode> = ({
   children,
 }) => {
   const [currentAccount, setCurrentAccount] = useState<string>("");
-  const [currentBalance, setCurrentBalance] = useState<string>("");
   const [ethPrice, setEthPrice] = useState<string>("");
 
   useEffect(() => {
-    checkIfWalletIsConnected();
     getEthPrice();
-  }, [currentAccount, ethPrice]);
+  }, []);
+
+  useEffect(() => {
+    checkIfWalletIsConnected();
+  }, [currentAccount]);
 
   const getEthPrice = async () => {
-    // get eth price
-    const etherscan = new ethers.providers.EtherscanProvider(
-      undefined,
-      process.env.ETHERSCAN_KEY
-    );
-    const ethPrice = await etherscan.getEtherPrice();
-    setEthPrice(ethPrice.toString());
-    console.log(ethPrice);
+    const URL = `http://134.122.118.59:4000/price/latest`;
+    const res = await fetch(URL);
+    const data = await res.json();
+    const price = (parseInt(data?.price) / 1e18).toString();
+    setEthPrice(price);
   };
 
   const connectWallet = async (metamask = eth): Promise<void> => {
@@ -52,12 +50,6 @@ export const TransactionProvider: React.FC<React.ReactNode> = ({
       if (accounts.length) {
         // account connected
         setCurrentAccount(accounts[0]);
-
-        // get account balance
-        const provider = new ethers.providers.Web3Provider(metamask);
-        const bal = await provider.getBalance(currentAccount);
-
-        setCurrentBalance(ethers.utils.formatEther(bal));
       }
     } catch (error) {
       console.error(error);
@@ -68,9 +60,9 @@ export const TransactionProvider: React.FC<React.ReactNode> = ({
     <TransactionContext.Provider
       value={{
         currentAccount,
-        currentBalance,
         connectWallet,
         ethPrice,
+        eth,
       }}
     >
       {children}

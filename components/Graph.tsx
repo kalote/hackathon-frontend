@@ -8,6 +8,7 @@ import {
   Title,
   LinearScale,
   Tooltip,
+  TooltipItem,
 } from "chart.js";
 
 Chart.register(
@@ -50,6 +51,18 @@ const Graph: React.FC<GraphProps> = ({ balanceData }) => {
             legend: {
               display: false,
             },
+            tooltip: {
+              position: "nearest",
+              callbacks: {
+                title: (items) => {
+                  let theTitle;
+                  items.forEach((item) => {
+                    if (item.label) theTitle = item.label;
+                  });
+                  return `Block: ${theTitle}`;
+                },
+              },
+            },
           },
           scales: {
             x: {
@@ -59,7 +72,7 @@ const Graph: React.FC<GraphProps> = ({ balanceData }) => {
                   // Hide every 2nd tick label
                   return `Block #${this.getLabelForValue(val as number)}`;
                 },
-                color: "rgba(138, 138, 139, 0.3)",
+                color: "rgba(170, 170, 171, 0.3)",
               },
               grid: {
                 display: false,
@@ -68,10 +81,10 @@ const Graph: React.FC<GraphProps> = ({ balanceData }) => {
             y: {
               position: "right",
               ticks: {
-                color: "rgba(138, 138, 139, 0.3)",
+                color: "rgba(170, 170, 171, 0.3)",
               },
               grid: {
-                color: "rgba(138, 138, 139, 0.3)",
+                color: "rgba(170, 170, 171, 0.3)",
               },
             },
           },

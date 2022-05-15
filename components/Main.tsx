@@ -65,7 +65,7 @@ const Main = () => {
   // Calculate account balance in dollar based on ethPrice + current balance in ETH
   useEffect(() => {
     if (!currentBalanceInEth || !ethPrice) return;
-    const balInDollar = (parseInt(currentBalanceInEth) * parseInt(ethPrice))
+    const balInDollar = (parseFloat(currentBalanceInEth) * parseFloat(ethPrice))
       .toFixed(2)
       .toString();
     setCurrentBalanceInDollar(balInDollar);
